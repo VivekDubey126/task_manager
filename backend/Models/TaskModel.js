@@ -1,16 +1,28 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const TaskSchema = new Schema({
-    taskName: {
+const BlogSchema = new Schema({
+    title: {
         type: String,
         required: true
     },
-    isDone: {
-        type: Boolean,
+    description: {
+        type: String,
         required: true
+    },
+    image: {
+        type: String,
+        required: false
+    },
+    isPublished: {
+        type: Boolean,
+        default: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
-const TaskModel = mongoose.model('todos', TaskSchema);
-module.exports = TaskModel;
+const BlogModel = mongoose.model('blogs', BlogSchema);
+module.exports = BlogModel;

@@ -1,57 +1,54 @@
-const TaskModel = require("../Models/TaskModel");
+const BlogModel = require("../Models/TaskModel");
 
-
-const createTask = async (req, res) => {
+const createBlog = async (req, res) => {
     const data = req.body;
     try {
-        const model = new TaskModel(data);
+        const model = new BlogModel(data);
         await model.save();
         res.status(201)
-            .json({ message: 'Task is created', success: true });
+            .json({ message: 'Blog post created', success: true });
     } catch (err) {
-        res.status(500).json({ message: 'Failed to create task', success: false });
+        res.status(500).json({ message: 'Failed to create blog post', success: false });
     }
 }
 
-const fetchAllTasks = async (req, res) => {
+const fetchAllBlogs = async (req, res) => {
     try {
-        const data = await TaskModel.find({});
+        const data = await BlogModel.find({}).sort({ createdAt: -1 });
         res.status(200)
-            .json({ message: 'All Tasks', success: true, data });
+            .json({ message: 'All Blog Posts', success: true, data });
     } catch (err) {
-        res.status(500).json({ message: 'Failed to get all tasks', success: false });
+        res.status(500).json({ message: 'Failed to fetch blog posts', success: false });
     }
 }
 
-
-const updateTaskById = async (req, res) => {
+const updateBlogById = async (req, res) => {
     try {
         const id = req.params.id;
         const body = req.body;
         const obj = { $set: { ...body } };
-        await TaskModel.findByIdAndUpdate(id, obj)
+        await BlogModel.findByIdAndUpdate(id, obj)
         res.status(200)
-            .json({ message: 'Task Updated', success: true });
+            .json({ message: 'Blog Post Updated', success: true });
     } catch (err) {
-        res.status(500).json({ message: 'Failed to updated task', success: false });
+        res.status(500).json({ message: 'Failed to update blog post', success: false });
     }
 }
 
-
-const deleteTaskById = async (req, res) => {
+const deleteBlogById = async (req, res) => {
     try {
         const id = req.params.id;
-        await TaskModel.findByIdAndDelete(id);
+        await BlogModel.findByIdAndDelete(id);
         res.status(200)
-            .json({ message: 'Task is deleted', success: true });
+            .json({ message: 'Blog Post Deleted', success: true });
     } catch (err) {
-        res.status(500).json({ message: 'Failed to delete task', success: false });
+        res.status(500).json({ message: 'Failed to delete blog post', success: false });
     }
 }
 
 module.exports = {
-    createTask,
-    fetchAllTasks,
-    updateTaskById,
-    deleteTaskById
+    createBlog,
+    fetchAllBlogs,
+    updateBlogById,
+    deleteBlogById
 }

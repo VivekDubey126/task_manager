@@ -1,17 +1,17 @@
-const { createTask, fetchAllTasks, updateTaskById, deleteTaskById } = require('../Controllers/TaskController');
+const { createBlog, fetchAllBlogs, updateBlogById, deleteBlogById } = require('../Controllers/TaskController');
 
 const router = require('express').Router();
 
-// To get all the tasks
-router.get('/', fetchAllTasks);
+// To get all the blogs
+router.get('/', fetchAllBlogs);
 
-// To create a task
-router.post('/', createTask);
+// To create a blog post
+router.post('/', createBlog);
 
-// To update a task
-router.put('/:id', updateTaskById);
+// To update a blog post
+router.put('/:id', updateBlogById);
 
-// To delete a task
-router.delete('/:id', deleteTaskById);
+// To delete a blog post
+router.delete('/:id', deleteBlogById);
 
 module.exports = router;

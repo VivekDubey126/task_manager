@@ -1,15 +1,13 @@
 import { API_URL } from "./utils"
 
-
-export const CreateTask = async (taskObj) => {
-    const url = `${API_URL}/tasks`;
-    console.log('url ', url)
+export const CreateBlog = async (blogObj) => {
+    const url = `${API_URL}/blogs`;
     const options = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(taskObj)
+        body: JSON.stringify(blogObj)
     };
     try {
         const result = await fetch(url, options);
@@ -19,9 +17,9 @@ export const CreateTask = async (taskObj) => {
         return err;
     }
 }
-export const GetAllTasks = async () => {
-    const url = `${API_URL}/tasks`;
-    console.log('url ', url)
+
+export const GetAllBlogs = async () => {
+    const url = `${API_URL}/blogs`;
     const options = {
         method: 'GET',
         headers: {
@@ -37,9 +35,8 @@ export const GetAllTasks = async () => {
     }
 }
 
-export const DeleteTaskById = async (id) => {
-    const url = `${API_URL}/tasks/${id}`;
-    console.log('url ', url)
+export const DeleteBlogById = async (id) => {
+    const url = `${API_URL}/blogs/${id}`;
     const options = {
         method: 'DELETE',
         headers: {
@@ -55,10 +52,8 @@ export const DeleteTaskById = async (id) => {
     }
 }
 
-
-export const UpdateTaskById = async (id, reqBody) => {
-    const url = `${API_URL}/tasks/${id}`;
-    console.log('url ', url)
+export const UpdateBlogById = async (id, reqBody) => {
+    const url = `${API_URL}/blogs/${id}`;
     const options = {
         method: 'PUT',
         headers: {

@@ -1,229 +1,164 @@
 import React, { useEffect, useState } from 'react';
-import { FaCheck, FaPencilAlt, FaPlus, FaSearch, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaSearch, FaTrash } from 'react-icons/fa';
 import { ToastContainer } from 'react-toastify';
-import { CreateTask, DeleteTaskById, GetAllTasks, UpdateTaskById } from './api';
+import { CreateBlog, DeleteBlogById, GetAllBlogs, UpdateBlogById } from './api';
 import { notify } from './utils';
-function TaskManager() {
-    const [input, setInput] = useState('');
-    const [tasks, setTasks] = useState([]);
-    const [copyTasks, setCopyTasks] = useState([]);
-    const [updateTask, setUpdateTask] = useState(null);
 
-    const handleTask = () => {
-        if (updateTask && input) {
-            //upadte api call
-            console.log('update api call');
-            const obj = {
-                taskName: input,
-                isDone: updateTask.isDone,
-                _id: updateTask._id
-            }
-            handleUpdateItem(obj);
-        } else if (updateTask === null && input) {
-            console.log('create api call')
-            //create api call
-            handleAddTask();
+function BlogManager() {
+    const [blogs, setBlogs] = useState([]);
+    const [copyBlogs, setCopyBlogs] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentBlog, setCurrentBlog] = useState({ title: '', description: '', image: '' });
+    const [editingId, setEditingId] = useState(null);
+
+    const fetchBlogs = async () => {
+        try {
+            const { data } = await GetAllBlogs();
+            setBlogs(data || []);
+            setCopyBlogs(data || []);
+        } catch (err) {
+            notify('Failed to fetch blogs', 'error');
         }
-        setInput('')
-    }
+    };
 
     useEffect(() => {
-        if (updateTask) {
-            setInput(updateTask.taskName);
-        }
-    }, [updateTask])
+        fetchBlogs();
+    }, []);
 
-    const handleAddTask = async () => {
-        const obj = {
-            taskName: input,
-            isDone: false
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!currentBlog.title || !currentBlog.description) {
+            notify('Title and Description are required', 'error');
+            return;
         }
+
         try {
-            const { success, message } =
-                await CreateTask(obj);
-            if (success) {
-                //show success toast
-                notify(message, 'success')
+            if (editingId) {
+                const { success, message } = await UpdateBlogById(editingId, currentBlog);
+                if (success) notify(message, 'success');
             } else {
-                //show error toast
-                notify(message, 'error')
+                const { success, message } = await CreateBlog(currentBlog);
+                if (success) notify(message, 'success');
             }
-            fetchAllTasks()
+            setIsModalOpen(false);
+            setCurrentBlog({ title: '', description: '', image: '' });
+            setEditingId(null);
+            fetchBlogs();
         } catch (err) {
-            console.error(err);
-            notify('Failed to create task', 'error')
+            notify('Something went wrong', 'error');
         }
-    }
+    };
 
-    const fetchAllTasks = async () => {
-        try {
-            const { data } =
-                await GetAllTasks();
-            setTasks(data);
-            setCopyTasks(data);
-        } catch (err) {
-            console.error(err);
-            notify('Failed to create task', 'error')
-        }
-    }
-    useEffect(() => {
-        fetchAllTasks()
-    }, [])
-
-
-    const handleDeleteTask = async (id) => {
-        try {
-            const { success, message } = await DeleteTaskById(id);
-            if (success) {
-                //show success toast
-                notify(message, 'success')
-            } else {
-                //show error toast
-                notify(message, 'error')
+    const handleDelete = async (id) => {
+        if (window.confirm('Delete this post?')) {
+            try {
+                const { success, message } = await DeleteBlogById(id);
+                if (success) {
+                    notify(message, 'success');
+                    fetchBlogs();
+                }
+            } catch (err) {
+                notify('Delete failed', 'error');
             }
-            fetchAllTasks()
-        } catch (err) {
-            console.error(err);
-            notify('Failed to create task', 'error')
         }
-    }
-
-    const handleCheckAndUncheck = async (item) => {
-        const { _id, isDone, taskName } = item;
-        const obj = {
-            taskName,
-            isDone: !isDone
-        }
-        try {
-            const { success, message } = await UpdateTaskById(_id, obj);
-            if (success) {
-                //show success toast
-                notify(message, 'success')
-            } else {
-                //show error toast
-                notify(message, 'error')
-            }
-            fetchAllTasks()
-        } catch (err) {
-            console.error(err);
-            notify('Failed to create task', 'error')
-        }
-    }
-
-    const handleUpdateItem = async (item) => {
-        const { _id, isDone, taskName } = item;
-        const obj = {
-            taskName,
-            isDone: isDone
-        }
-        try {
-            const { success, message } = await UpdateTaskById(_id, obj);
-            if (success) {
-                //show success toast
-                notify(message, 'success')
-            } else {
-                //show error toast
-                notify(message, 'error')
-            }
-            fetchAllTasks()
-        } catch (err) {
-            console.error(err);
-            notify('Failed to create task', 'error')
-        }
-    }
+    };
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
-        const oldTasks = [...copyTasks];
-        const results = oldTasks.filter((item) => item.taskName.toLowerCase().includes(term));
-        setTasks(results);
-    }
+        const results = copyBlogs.filter(b => 
+            b.title.toLowerCase().includes(term) || 
+            b.description.toLowerCase().includes(term)
+        );
+        setBlogs(results);
+    };
+
+    const openEdit = (blog) => {
+        setCurrentBlog({ title: blog.title, description: blog.description, image: blog.image });
+        setEditingId(blog._id);
+        setIsModalOpen(true);
+    };
+
     return (
-        <div className='d-flex flex-column align-items-center
-        w-50 m-auto mt-5'>
-            <h1 className='mb-4'>Task Manager App</h1>
-            {/* Input and Search box */}
-            <div className='d-flex justify-content-between
-            align-items-center mb-4 w-100'>
-                <div className='input-group flex-grow-1 me-2'>
-                    <input type='text'
-                        value={input}
-                        onChange={
-                            (e) => setInput(e.target.value)}
-                        className='form-control me-1'
-                        placeholder='Add a new Task'
-                    />
-                    <button
-                        onClick={handleTask}
-                        className='btn btn-success btn-sm me-2'
-                    >
-                        <FaPlus className='m-2' />
+        <div className="container py-5">
+            <header className="text-center mb-5">
+                <h1 className="display-3 fw-bold mb-3" style={{ background: 'linear-gradient(to right, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    Elite Insights
+                </h1>
+                <p className="text-muted fs-5">Luxury content for the modern era.</p>
+                
+                <div className="d-flex justify-content-center gap-3 mt-4">
+                    <div className="input-group glass w-50">
+                        <span className="input-group-text bg-transparent border-0 text-muted"><FaSearch /></span>
+                        <input onChange={handleSearch} type="text" className="form-control bg-transparent border-0 text-white shadow-none" placeholder="Search articles..." />
+                    </div>
+                    <button onClick={() => { setEditingId(null); setCurrentBlog({ title: '', description: '', image: '' }); setIsModalOpen(true); }} className="btn btn-primary rounded-pill d-flex align-items-center gap-2">
+                        <FaPlus /> New Post
                     </button>
                 </div>
+            </header>
 
-                <div className='input-group flex-grow-1'>
-                    <span
-                        className='input-group-text'
-                    >
-                        <FaSearch />
-                    </span>
-                    <input
-                        onChange={handleSearch}
-                        className='form-control'
-                        type='text'
-                        placeholder='Search tasks'
-                    />
-                </div>
-            </div>
-
-            {/* List of items */}
-            <div className='d-flex flex-column w-100'>
-                {
-                    tasks.map((item) => (
-                        <div key={item._id} className='m-2 p-2 border bg-light
-                w-100 rounded-3 d-flex justify-content-between
-                align-items-center'>
-                            <span
-                                className={item.isDone ? 'text-decoration-line-through' : ''}
-                            >{item.taskName}
-                            </span>
-
-                            <div className=''>
-                                <button
-                                    onClick={() => handleCheckAndUncheck(item)}
-                                    className='btn btn-success
-                            btn-sm me-2'
-                                    type='button'>
-                                    <FaCheck />
-                                </button>
-                                <button
-                                    onClick={() => setUpdateTask(item)}
-                                    className='btn btn-primary
-                            btn-sm me-2'
-                                    type='button'>
-                                    <FaPencilAlt />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteTask(item._id)}
-                                    className='btn btn-danger
-                            btn-sm me-2'
-                                    type='button'>
-                                    <FaTrash />
-                                </button>
+            <div className="row g-4">
+                {blogs.map((blog) => (
+                    <div key={blog._id} className="col-md-6 col-lg-4">
+                        <div className="card h-100 glass text-white overflow-hidden transition-all hover-up">
+                            {blog.image ? (
+                                <img src={blog.image} className="card-img-top" alt={blog.title} style={{ height: '200px', objectFit: 'cover' }} />
+                            ) : (
+                                <div className="bg-dark d-flex align-items-center justify-content-center" style={{ height: '200px' }}>
+                                    <span className="text-muted">No Preview</span>
+                                </div>
+                            )}
+                            <div className="card-body p-4">
+                                <h3 className="card-title fw-bold h5 mb-3">{blog.title}</h3>
+                                <p className="card-text text-muted mb-4 line-clamp-3">{blog.description}</p>
+                                <div className="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary">
+                                    <small className="text-muted">{new Date(blog.createdAt).toLocaleDateString()}</small>
+                                    <div className="d-flex gap-2">
+                                        <button onClick={() => openEdit(blog)} className="btn btn-sm btn-outline-info border-0"><FaEdit /></button>
+                                        <button onClick={() => handleDelete(blog._id)} className="btn btn-sm btn-outline-danger border-0"><FaTrash /></button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    ))
-                }
+                    </div>
+                ))}
             </div>
 
-            {/* Toastify */}
-            <ToastContainer
-                position='top-right'
-                autoClose={3000}
-                hideProgressBar={false}
-            />
+            {/* Post Modal */}
+            {isModalOpen && (
+                <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content glass text-white p-4">
+                            <div className="modal-header border-0">
+                                <h5 className="modal-title fw-bold">{editingId ? 'Edit Post' : 'Create New Post'}</h5>
+                                <button onClick={() => setIsModalOpen(false)} className="btn-close btn-close-white"></button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="modal-body">
+                                    <input value={currentBlog.title} onChange={e => setCurrentBlog({ ...currentBlog, title: e.target.value })} type="text" className="form-control glass mb-3 text-white" placeholder="Article Title" />
+                                    <textarea value={currentBlog.description} onChange={e => setCurrentBlog({ ...currentBlog, description: e.target.value })} className="form-control glass mb-3 text-white" rows="5" placeholder="Tell your story..."></textarea>
+                                    <input value={currentBlog.image} onChange={e => setCurrentBlog({ ...currentBlog, image: e.target.value })} type="text" className="form-control glass mb-3 text-white" placeholder="Image URL (Unsplash link recommended)" />
+                                </div>
+                                <div className="modal-footer border-0">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline-secondary rounded-pill px-4">Cancel</button>
+                                    <button type="submit" className="btn btn-primary rounded-pill px-4">{editingId ? 'Update' : 'Publish'}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ToastContainer theme="dark" position="bottom-right" />
+
+            <style>{`
+                .hover-up:hover { transform: translateY(-10px); transition: 0.3s; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+                .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+                .glass:focus { background: rgba(30, 41, 59, 0.9); border-color: #6366f1; color: white; box-shadow: none; }
+                .modal-content.glass { border: 1px solid rgba(255,255,255,0.2); }
+            `}</style>
         </div>
-    )
+    );
 }
 
-export default TaskManager
+export default BlogManager;

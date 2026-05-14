@@ -12,7 +12,7 @@ app.get('/', (req, res) => {
 });
 app.use(cors())
 app.use(bodyParser.json());
-app.use('/tasks', TaskRouter)
+app.use('/blogs', TaskRouter)
 
 app.listen(PORT, () => {
     console.log(`Server is running on PORT=${PORT}`);
